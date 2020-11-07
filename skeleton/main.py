@@ -5,7 +5,7 @@ import random
 import csv
 
 #SUMO_HOME
-os.environ["SUMO_HOME"] = r"C:\Temp\sumo-win64-git\sumo-git"
+os.environ["SUMO_HOME"] = r"E:\sumo"
 
 # Add the traci python library to the tools path
 if 'SUMO_HOME' in os.environ:
