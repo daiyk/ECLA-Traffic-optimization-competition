@@ -125,19 +125,20 @@ class map_manager:
         personNum = [0 for i in range(self._numNodes)]
         personNum[start_id] = currentEdgePerson[self.edgeid_list[self._nodeDict[self.getEdge(edgeID_from).getFromNode().getID()]][start_id]]
         pre_id = [-1 for i in range(self._numNodes)]
-        pre_id[start_id]=start_id
-
+        pre_id[start_id]=self._nodeDict[self.getEdge(edgeID_from).getFromNode().getID()]
+        origin = self._nodeDict[self.getEdge(edgeID_from).getFromNode().getID()]
+        pre_id[origin]=origin
+        cost[origin][0]=0
         # stores in the queue
         queue=[]
         queue.append(start_id)
         FindTarget = False
-        currentCap = 0
         endID = -1
         while queue:
             pop_id = queue.pop(0)
-            if currentCap == capacity:
-               break
             for neighbor in self.adjacent_list[pop_id]:
+                if(neighbor==origin):
+                    continue
                 if(cost[neighbor][0]==-1):
                     queue.append(neighbor)
                 currentCost = cost[pop_id][0] + self.getEdge(self.edgeid_list[pop_id][neighbor]).getLength()
