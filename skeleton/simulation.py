@@ -35,11 +35,11 @@ class Simulation:
                 for _ in range(int(List_bus_timestamp[1])):
                     dictionary_bus[step].append({'bus_id': f'bus_{self.bus_index}', 'bus_type': "BUS_M", 'capacity': 4})
                     self.bus_index += 1
-            if List_bus_timestamp[1] > 0:
+            if List_bus_timestamp[2] > 0:
                 for _ in range(int(List_bus_timestamp[2])):
                     dictionary_bus[step].append({'bus_id': f'bus_{self.bus_index}', 'bus_type': "BUS_S", 'capacity': 2})
                     self.bus_index += 1
-        return dictionary_bus
+            return dictionary_bus
 
     # This needs to be checked
     def Get_Onboard_Person_list(self, bus_id: str):
@@ -68,6 +68,13 @@ class Simulation:
         # todo: which person to pick from currentEdgePerson
         buses = self.BusDict_timestamp(step)
         persons_to_bus = self.List_bus_person[step][-1]
+
+        for p in persons_to_bus:
+            if p.edge_from not in currentEdgePerson:
+                currentEdgePerson[p.edge_from] = [p]
+            else:
+                currentEdgePerson[p.edge_from].append(p)
+
         i = 0
         for bus in buses[step]:
             bus_id = bus['bus_id']
@@ -82,7 +89,7 @@ class Simulation:
             i += personCapacity
 
             edgeID_from = person.edge_from
-            shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
+            shortestPath = self.network.getWeighedShortestPaths(edgeID_from, personCapacity, currentEdgePerson)
 
             persons_to_travel = defaultdict()
             for sp in shortestPath:

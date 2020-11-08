@@ -62,7 +62,7 @@ def main():
     bus_depot_start_edge = '744377000#0'
     bus_depot_end_edge = '521059831#0'
 
-    network = map_manager(network_xml_file)
+    network = map_manager(network_xml_file,bus_depot_start_edge, bus_depot_end_edge)
     simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network, List_bus_person)
 
     simulation.run()
@@ -79,7 +79,7 @@ def clean_logs(logs_folder: str, sumo_log_file: str, traci_log_file: str, delete
             os.remove(sumo_log_file)
         if os.path.exists(traci_log_file):
             os.remove(traci_log_file)
-    
+
 
 def start_traci_simulation(sumocfg_file: str, sumo_log_file: str, traci_log_file: str):
     sumoBinary = os.path.join(os.environ['SUMO_HOME'], 'bin', 'sumo-gui')
@@ -131,7 +131,7 @@ def generate_random_people(seed: int, scale_factor: float, net_xml_file: str, ma
 
         if t0 >= max_steps:
             continue
-        
+
         count = 0
         while count < weight:
             count += 1
