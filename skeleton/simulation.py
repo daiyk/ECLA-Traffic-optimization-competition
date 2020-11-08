@@ -53,7 +53,6 @@ class Simulation:
         # bus_type = "BUS_L"
         # personCapacity = 8
 
-
         # todo: which person to pick from currentEdgePerson
         buses = self.BusDict_timestamp(step)
         persons_to_bus = self.List_bus_person[step][-1]
@@ -62,6 +61,10 @@ class Simulation:
             bus_id = bus['bus_id']
             bus_type = bus['bus_type']
             personCapacity = bus['capacity']
+            traci.vehicle.add(vehID=bus_id, typeID=bus_type, routeID="", depart=step, departPos=0,
+                              departSpeed=0, departLane=0, personCapacity=personCapacity)
+            traci.vehicle.subscribe(bus_id, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_POSITION, tc.VAR_NEXT_STOPS))
+            self.bus.append(bus_id)
 
             person = persons_to_bus[i]
             i += personCapacity
@@ -69,20 +72,32 @@ class Simulation:
             edgeID_from = person.edge_from
             shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
 
+            persons_to_travel = defaultdict()
             for sp in shortestPath:
-               person = currentEdgePerson[sp].pop()
+                while personCapacity > 0 and len(currentEdgePerson[sp]) > 0:
+                    if sp not in persons_to_travel:
+                        persons_to_travel[sp] = [currentEdgePerson[sp].pop(0)]
+                    else:
+                        persons_to_travel[sp].append(currentEdgePerson[sp].pop(0))
+                    personCapacity -= 1
+
+            for i in range(len(shortestPath)):
+                persons = persons_to_travel[shortestPath[i]]
+                if i == 0:
+                    traci.vehicle.setRoute(bus_id, [self.bus_depot_start_edge])
+                    traci.vehicle.changeTarget(bus_id, shortestPath[i])
+                else:
+                    traci.vehicle.setRoute(bus_id, [shortestPath[i-1], shortestPath[i]])
+                    traci.vehicle.changeTarget(bus_id, shortestPath[i])
+                for p in persons:
+                    traci.vehicle.setStop(vehID=bus_id, edgeID=shortestPath[i], pos=p.position_from, laneIndex=0,
+                                          duration=10, flags=tc.STOP_DEFAULT)
 
 
-        # todo: update currentEdgePerson
-
-        # todo: take the information from subscribe bus about the passengers
-
-        # todo: for each passengers in the bus, shortestPathCost_list[e1.getID()][e2.getID()] = cost , then sort, then choose the lowest cost path to travel
 
         # todo: return the bus to the end_edge.
         # todo: how to manage the bus return.
 
-        #
         # try:
         #     # todo: optimize depart time?
         #     traci.vehicle.add(vehID=bus_id, typeID=bus_type, routeID="", depart=person.depart + 2, departPos=0,
