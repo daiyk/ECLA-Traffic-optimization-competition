@@ -20,9 +20,11 @@ class Simulation:
         self.bus = []
         self.bus_index = 0
 
+    def pick_buses(self):
+        pass
     def pick_up_persons(self, currentEdgePerson, step):
 
-        # todo: creaete bus, update bus list
+        # todo: creaete bus, update bus list (L; M; S)
         bus_id = f'bus_{self.bus_index}'
         self.bus_index += 1
         self.bus.append(bus_id)
@@ -34,9 +36,16 @@ class Simulation:
 
 
         # todo: which person to pick from currentEdgePerson
-        persons = currentEdgePerson.items()  ####..........
-        edgeID_from = persons.edge_from ### ..............
-        shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
+        buses = self.pick_buses(step)
+        persons_to_bus = self.List_bus_person[step][-1]
+        for bus in buses:
+            bus_type = bus['bus_type']
+            personCapacity = bus['capacity']
+            persons = persons_to_bus
+
+            persons = currentEdgePerson.items()  ####..........
+            edgeID_from = persons.edge_from ### ..............
+            shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
 
 
         # todo: update currentEdgePerson
