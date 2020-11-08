@@ -7,7 +7,8 @@ import traci.constants as tc
 
 
 class Simulation:
-    def __init__(self, simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network, List_bus_person):
+    def __init__(self, simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network,
+                 List_bus_person):
         self.simulation_steps = simulation_steps
         self.sleep_time = sleep_time
         self.pedestrians = pedestrians
@@ -20,26 +21,45 @@ class Simulation:
         self.bus = []
         self.bus_index = 0
 
-    def pick_buses(self):
-        pass
+    def BusDict_timestamp(self, step: int):
+        List_bus_timestamp = self.List_bus_person[step][0]
+        if List_bus_timestamp == [0, 0, 0]:
+            return {}
+        else:
+            dictionary_bus = {step: []}
+            if List_bus_timestamp[0] > 0:
+                for _ in range(int(List_bus_timestamp[0])):
+                    dictionary_bus[step].append({'bus_id': f'bus_{self.bus_index}', 'bus_type': "BUS_L", 'capacity': 8})
+                    self.bus_index += 1
+            if List_bus_timestamp[1] > 0:
+                for _ in range(int(List_bus_timestamp[1])):
+                    dictionary_bus[step].append({'bus_id': f'bus_{self.bus_index}', 'bus_type': "BUS_M", 'capacity': 4})
+                    self.bus_index += 1
+            if List_bus_timestamp[1] > 0:
+                for _ in range(int(List_bus_timestamp[2])):
+                    dictionary_bus[step].append({'bus_id': f'bus_{self.bus_index}', 'bus_type': "BUS_S", 'capacity': 2})
+                    self.bus_index += 1
+        return dictionary_bus
+
     def pick_up_persons(self, currentEdgePerson, step):
 
-        # todo: creaete bus, update bus list (L; M; S)
-        bus_id = f'bus_{self.bus_index}'
-        self.bus_index += 1
-        self.bus.append(bus_id)
-        traci.vehicle.subscribe(bus_id, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_POSITION, tc.VAR_NEXT_STOPS))
-
-        # todo: get bus_type and capacity, default BUS_L
-        bus_type = "BUS_L"
-        personCapacity = 8
+        # # todo: creaete bus, update bus list (L; M; S)
+        # bus_id = f'bus_{self.bus_index}'
+        # self.bus_index += 1
+        # self.bus.append(bus_id)
+        # traci.vehicle.subscribe(bus_id, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_POSITION, tc.VAR_NEXT_STOPS))
+        #
+        # # todo: get bus_type and capacity, default BUS_L
+        # bus_type = "BUS_L"
+        # personCapacity = 8
 
 
         # todo: which person to pick from currentEdgePerson
-        buses = self.pick_buses(step)
+        buses = self.BusDict_timestamp(step)
         persons_to_bus = self.List_bus_person[step][-1]
         i = 0
-        for bus in buses:
+        for bus in buses[step]:
+            bus_id = bus['bus_id']
             bus_type = bus['bus_type']
             personCapacity = bus['capacity']
             person = persons_to_bus[i]
@@ -47,7 +67,6 @@ class Simulation:
 
             edgeID_from = person.edge_from
             shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
-
 
         # todo: update currentEdgePerson
 
@@ -57,8 +76,6 @@ class Simulation:
 
         # todo: return the bus to the end_edge.
         # todo: how to manage the bus return.
-
-
 
         #
         # try:
@@ -88,7 +105,6 @@ class Simulation:
         # except:
         #     print("Unexpected error:", sys.exc_info()[0])
 
-
     def run(self):
 
         # dict {step: [person1, person2, ,..., ] }
@@ -100,13 +116,11 @@ class Simulation:
             else:
                 pedestrians_steps[depart].append(person)
 
-
         currentEdgePerson = defaultdict()
         #  { Edges_id : [person1, person2....]    }
 
         step = 0
         while step <= self.simulation_steps:
-
 
             # [ step t = 000, yes, #bus, (S,M,L), [people list]  [yes(no), bus_type], None ,    ]
 
@@ -126,12 +140,10 @@ class Simulation:
             # todo: update currentEdgePerson
             self.pick_up_persons(currentEdgePerson, step)
 
-
             if self.sleep_time > 0:
                 sleep(self.sleep_time)
             step += 1
             # print(traci.vehicle.getSubscriptionResults('bus_0'))
-
 
             # # todo: total wait time,  total km driven
             # # check person waiting stage for bus i
