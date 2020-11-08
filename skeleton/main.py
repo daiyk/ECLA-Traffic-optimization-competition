@@ -5,7 +5,7 @@ import random
 import csv
 
 #SUMO_HOME
-os.environ["SUMO_HOME"] = r"E:\sumo"
+os.environ["SUMO_HOME"] = r"C:\Users\admin\Documents\Eclipse\Sumo"
 
 # Add the traci python library to the tools path
 if 'SUMO_HOME' in os.environ:
@@ -17,8 +17,9 @@ else:
 # Load traci
 import traci
 import traci.constants as tc
-from simulation import Simulation
-
+from skeleton.simulation import Simulation
+from skeleton.map_manager import map_manager
+from skeleton.BusArrange import Fast
 
 def main():
 
@@ -36,9 +37,9 @@ def main():
     pedestrians_until_step = simulation_steps # create pedestrians up until this step
 
     # location of the sumocfg file
-    sumocfg_file = r"..\..\trafficmap\aarhus\osm.sumocfg"
+    sumocfg_file = r"C:\Users\admin\Documents\trafficmap\aarhus\osm.sumocfg"
     # location of the XML file containing the city network
-    network_xml_file = r'..\..\trafficmap\aarhus\osm.net.xml'
+    network_xml_file = r'C:\Users\admin\Documents\trafficmap\aarhus\osm.net.xml'
 
     # logfiles
     logs_folder = './logs/'
@@ -53,13 +54,17 @@ def main():
     start_traci_simulation(sumocfg_file=sumocfg_file, sumo_log_file=sumo_log_file, traci_log_file=traci_log_file)
     pedestrians = add_pedestrians(seed=pedestrians_seed, scale_factor=pedestrians_scale_factor, net_xml_file=network_xml_file, max_steps=pedestrians_until_step)
 
+    List_bus_person = Fast(pedestrians, simulation_steps)
+
     ######################################################################
 
     # Edges for the starting and ending for the bus depot
     bus_depot_start_edge = '744377000#0'
     bus_depot_end_edge = '521059831#0'
 
-    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge)
+    network = map_manager(network_xml_file,bus_depot_start_edge, bus_depot_end_edge)
+    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network, List_bus_person)
+
     simulation.run()
 
     ######################################################################
@@ -74,7 +79,7 @@ def clean_logs(logs_folder: str, sumo_log_file: str, traci_log_file: str, delete
             os.remove(sumo_log_file)
         if os.path.exists(traci_log_file):
             os.remove(traci_log_file)
-    
+
 
 def start_traci_simulation(sumocfg_file: str, sumo_log_file: str, traci_log_file: str):
     sumoBinary = os.path.join(os.environ['SUMO_HOME'], 'bin', 'sumo-gui')
@@ -126,7 +131,7 @@ def generate_random_people(seed: int, scale_factor: float, net_xml_file: str, ma
 
         if t0 >= max_steps:
             continue
-        
+
         count = 0
         while count < weight:
             count += 1
