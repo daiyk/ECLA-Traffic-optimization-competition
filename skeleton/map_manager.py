@@ -28,6 +28,22 @@ def calDistoThePoint(edges, x0, y0):
     return dist
 
 
+def write_cost(network_path):
+    net = sumolib.net.readNet(network_path)
+    edges = net.getEdges()
+    f = open("map_cost.csv", "w")
+    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
+    count = 0
+    for e1 in edges:
+        for e2 in edges:
+            if (e1.getID() == e2.getID()):
+                continue
+            _, cost = net.getShortestPath(e1, e2)
+            writer.writerow([e1.getID(), e2.getID(), cost])
+            print("count {} finished\n".format(count))
+            count = count + 1
+
+
 class map_manager:
     """
     docstring
@@ -74,13 +90,13 @@ class map_manager:
         # might need to store edge ids
 
         # calculate the cost of all shortest paths
-        self.shortestPathCost_list = collections.defaultdict(dict)
-        for e1 in edges:
-            for e2 in edges:
-                if (e1.getID() == e2.getID()):
-                    continue
-                _, cost = self._net.getShortestPath(e1.getID(), e2.getID())
-                self.shortestPathCost_list[e1.getID()][e2.getID()] = cost
+        # self.shortestPathCost_list=collections.defaultdict(dict)
+        # for e1 in edges:
+        #     for e2 in edges:
+        #         if(e1.getID()==e2.getID()):
+        #             continue
+        #         _,cost = self._net.getShortestPath(e1,e2)
+        #         self.shortestPathCost_list[e1.getID()][e2.getID()]=cost
 
     def getDistToStart(self):
         return self._edgeDistToStart
@@ -170,7 +186,7 @@ class map_manager:
             shortestPath.append(self.edgeid_list[pre_id[endID]][endID])
             endID = pre_id[endID]
         return shortestPath
-    
+
 # if __name__=="__main__":
 #     filePath = "F:\\polyhack\\trafficmap\\aarhus\\osm.net.xml"
 #     # test network reading function

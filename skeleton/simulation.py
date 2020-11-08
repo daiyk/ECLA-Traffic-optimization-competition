@@ -113,9 +113,8 @@ class Simulation:
                     else:
                         currentEdgePerson[p.edge_from].append(p)
 
-                # todo: update currentEdgePerson
-
-                self.pick_up_persons(currentEdgePerson, step)
+            # todo: update currentEdgePerson
+            self.pick_up_persons(currentEdgePerson, step)
 
 
             if self.sleep_time > 0:
