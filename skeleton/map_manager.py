@@ -28,28 +28,12 @@ def calDistoThePoint(edges, x0, y0):
     return dist
 
 
-def write_cost(network_path):
-    net = sumolib.net.readNet(network_path)
-    edges = net.getEdges()
-    f = open("map_cost.csv", "w")
-    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
-    count = 0
-    for e1 in edges:
-        for e2 in edges:
-            if (e1.getID() == e2.getID()):
-                continue
-            _, cost = net.getShortestPath(e1, e2)
-            writer.writerow([e1.getID(), e2.getID(), cost])
-            print("count {} finished\n".format(count))
-            count = count + 1
-
-
 class map_manager:
     """
     docstring
     """
 
-    def __init__(self, network_path):
+    def __init__(self, network_path, bus_start_edge_id, bus_stop_edge_id):
         if not os.path.exists(network_path):
             print("map_manager: provided 'network_path' is Invalid")
         self._net = sumolib.net.readNet(network_path)
@@ -66,14 +50,14 @@ class map_manager:
 
         self._edgeDistToStart = None
         self._edgeDistToEnd = None
-        # if (bus_start_edge_id in self._edgeIDs) and (bus_stop_edge_id in self._edgeIDs):
-        #     x_s1,y_s1 = self._net.getEdge(bus_start_edge_id).getFromNode().getCoord()
-        #     x_s2,y_s2 = self._net.getEdge(bus_start_edge_id).getToNode().getCoord()
-        #     self._edgeDistToStart = calDistoThePoint(edges,(x_s1+x_s2)/2.0,(y_s1+y_s2)/2.0)
+        if (bus_start_edge_id in self._edgeIDs) and (bus_stop_edge_id in self._edgeIDs):
+            x_s1, y_s1 = self._net.getEdge(bus_start_edge_id).getFromNode().getCoord()
+            x_s2, y_s2 = self._net.getEdge(bus_start_edge_id).getToNode().getCoord()
+            self._edgeDistToStart = calDistoThePoint(edges, (x_s1 + x_s2) / 2.0, (y_s1 + y_s2) / 2.0)
 
-        #     x_e1,y_e1 = self._net.getEdge(bus_stop_edge_id).getFromNode().getCoord()
-        #     x_e2,y_e2 = self._net.getEdge(bus_stop_edge_id).getToNode().getCoord()
-        #     self._edgeDistToEnd = calDistoThePoint(edges,(x_e1+x_e2)/2.0,(y_e1+y_e2)/2.0)
+            x_e1, y_e1 = self._net.getEdge(bus_stop_edge_id).getFromNode().getCoord()
+            x_e2, y_e2 = self._net.getEdge(bus_stop_edge_id).getToNode().getCoord()
+            self._edgeDistToEnd = calDistoThePoint(edges, (x_e1 + x_e2) / 2.0, (y_e1 + y_e2) / 2.0)
 
         self._nodeDict = {}
         # mapping from nodeID to index
@@ -88,15 +72,6 @@ class map_manager:
             self.adjacent_list[self._nodeDict[e.getFromNode().getID()]].append(self._nodeDict[e.getToNode().getID()])
             self.edgeid_list[self._nodeDict[e.getFromNode().getID()]][self._nodeDict[e.getToNode().getID()]] = e.getID()
         # might need to store edge ids
-
-        # calculate the cost of all shortest paths
-        # self.shortestPathCost_list=collections.defaultdict(dict)
-        # for e1 in edges:
-        #     for e2 in edges:
-        #         if(e1.getID()==e2.getID()):
-        #             continue
-        #         _,cost = self._net.getShortestPath(e1,e2)
-        #         self.shortestPathCost_list[e1.getID()][e2.getID()]=cost
 
     def getDistToStart(self):
         return self._edgeDistToStart
@@ -148,11 +123,13 @@ class map_manager:
     def getWeighedShortestPaths(self, edgeID_from, capacity, currentEdgePerson):
         if (edgeID_from not in self._edgeIDs):
             return None
-        cost = [-1, 0] * len(self._numNodes)
-        start_id = self._nodeDict[self.getEdge(edgeID_from).getFromNode()]
+        cost = [[-1, 0] for i in range(self._numNodes)]
+        start_id = self._nodeDict[self.getEdge(edgeID_from).getToNode().getID()]
         cost[start_id][0] = 0
-
-        pre_id = [-1] * len(self._numNodes)
+        personNum = [0 for i in range(self._numNodes)]
+        personNum[start_id] = currentEdgePerson[
+            self.edgeid_list[self._nodeDict[self.getEdge(edgeID_from).getFromNode().getID()]][start_id]]
+        pre_id = [-1 for i in range(self._numNodes)]
         pre_id[start_id] = start_id
 
         # stores in the queue
@@ -161,7 +138,7 @@ class map_manager:
         FindTarget = False
         currentCap = 0
         endID = -1
-        while not queue:
+        while queue:
             pop_id = queue.pop(0)
             if currentCap == capacity:
                 break
@@ -169,14 +146,16 @@ class map_manager:
                 if (cost[neighbor][0] == -1):
                     queue.append(neighbor)
                 currentCost = cost[pop_id][0] + self.getEdge(self.edgeid_list[pop_id][neighbor]).getLength()
-                if (currentCost < cost[neighbor] or cost[neighbor] == -1):
+                if (currentCost < cost[neighbor][0] or cost[neighbor][0] == -1):
                     cost[neighbor][0] = currentCost
                     pre_id[neighbor] = pop_id
-                    currentPersonNum = cost[pop_id][1] + currentEdgePerson[self.edgeid_list[pop_id][neighbor]]
+                    currentPersonNum = personNum[pop_id] + currentEdgePerson[self.edgeid_list[pop_id][neighbor]]
                     if (currentPersonNum >= capacity):
                         endID = neighbor
                         FindTarget = True
                         break
+                    else:
+                        personNum[neighbor] = currentPersonNum
             if FindTarget:
                 break
         if not FindTarget:
