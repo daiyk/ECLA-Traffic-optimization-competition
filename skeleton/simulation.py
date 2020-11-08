@@ -38,13 +38,14 @@ class Simulation:
         # todo: which person to pick from currentEdgePerson
         buses = self.pick_buses(step)
         persons_to_bus = self.List_bus_person[step][-1]
+        i = 0
         for bus in buses:
             bus_type = bus['bus_type']
             personCapacity = bus['capacity']
-            persons = persons_to_bus
+            person = persons_to_bus[i]
+            i += personCapacity
 
-            persons = currentEdgePerson.items()  ####..........
-            edgeID_from = persons.edge_from ### ..............
+            edgeID_from = person.edge_from
             shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
 
 
