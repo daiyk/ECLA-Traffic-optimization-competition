@@ -19,6 +19,7 @@ import traci
 import traci.constants as tc
 from skeleton.simulation import Simulation
 from skeleton.map_manager import map_manager
+from skeleton.BusArrange import Fast
 
 def main():
 
@@ -53,6 +54,8 @@ def main():
     start_traci_simulation(sumocfg_file=sumocfg_file, sumo_log_file=sumo_log_file, traci_log_file=traci_log_file)
     pedestrians = add_pedestrians(seed=pedestrians_seed, scale_factor=pedestrians_scale_factor, net_xml_file=network_xml_file, max_steps=pedestrians_until_step)
 
+    List_bus_person = Fast(pedestrians, simulation_steps)
+
     ######################################################################
 
     # Edges for the starting and ending for the bus depot
@@ -60,7 +63,8 @@ def main():
     bus_depot_end_edge = '521059831#0'
 
     network = map_manager(network_xml_file, bus_depot_start_edge, bus_depot_end_edge)
-    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network)
+    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network, List_bus_person)
+
     simulation.run()
 
     ######################################################################
