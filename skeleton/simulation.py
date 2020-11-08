@@ -19,16 +19,27 @@ class Simulation:
         self.bus = []
         self.bus_index = 0
 
-    def pick_up_person(self, currentEdgePerson, ):
+    def pick_up_person(self, currentEdgePerson):
         bus_id = f'bus_{self.bus_index}'
         self.bus_index += 1
         self.bus.append(bus_id)
+        traci.vehicle.subscribe(bus_id, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_POSITION, tc.VAR_NEXT_STOPS))
 
         # todo: get bus_type and capacity, default BUS_L
         bus_type = "BUS_L"
         personCapacity = 8
 
+
         # todo: which person to pick from currentEdgePerson
+        persons = currentEdgePerson.items()
+        edgeID_from = persons
+        shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
+
+        # create bus to take all bus find 
+        # update currentEdgePerson
+
+        #
+
 
         try:
             # todo: optimize depart time?
@@ -96,8 +107,10 @@ class Simulation:
                     else:
                         currentEdgePerson[p.edge_from].append(p)
 
+
                 # todo: update currentEdgePerson
                 self.pick_up_person(currentEdgePerson)
+
 
             if self.sleep_time > 0:
                 sleep(self.sleep_time)
