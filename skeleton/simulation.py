@@ -62,11 +62,16 @@ class Simulation:
             bus_id = bus['bus_id']
             bus_type = bus['bus_type']
             personCapacity = bus['capacity']
+
             person = persons_to_bus[i]
             i += personCapacity
 
             edgeID_from = person.edge_from
             shortestPath = self.network.getWeighedShortestPaths(self, edgeID_from, personCapacity, currentEdgePerson)
+
+            for sp in shortestPath:
+               person = currentEdgePerson[sp].pop()
+
 
         # todo: update currentEdgePerson
 
