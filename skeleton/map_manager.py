@@ -2,7 +2,7 @@ import os
 import sys
 import math
 import collections
-
+import csv
 #SUMO_HOME
 os.environ["SUMO_HOME"] = r"E:\sumo"
 
@@ -25,6 +25,21 @@ def calDistoThePoint(edges,x0,y0):
             y_e = y1+y2/2.0
             dist.append(math.sqrt((x_e-x0)**2+(y_e-y0)**2))
         return dist
+def write_cost(network_path):
+    net = sumolib.net.readNet(network_path)
+    edges = net.getEdges()
+    f = open("map_cost.csv","w")
+    writer = csv.writer(f,delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
+    count=0
+    for e1 in edges:
+            for e2 in edges:
+                if(e1.getID()==e2.getID()):
+                    continue
+                _,cost = net.getShortestPath(e1,e2)
+                writer.writerow([e1.getID(),e2.getID(),cost])
+                print("count {} finished\n".format(count))
+                count=count+1
+                
 
 class map_manager:
     """
@@ -71,13 +86,13 @@ class map_manager:
         # might need to store edge ids
 
         # calculate the cost of all shortest paths
-        self.shortestPathCost_list=collections.defaultdict(dict)
-        for e1 in edges:
-            for e2 in edges:
-                if(e1.getID()==e2.getID()):
-                    continue
-                _,cost = self._net.getShortestPath(e1.getID(),e2.getID())
-                self.shortestPathCost_list[e1.getID()][e2.getID()]=cost
+        # self.shortestPathCost_list=collections.defaultdict(dict)
+        # for e1 in edges:
+        #     for e2 in edges:
+        #         if(e1.getID()==e2.getID()):
+        #             continue
+        #         _,cost = self._net.getShortestPath(e1,e2)
+        #         self.shortestPathCost_list[e1.getID()][e2.getID()]=cost
 
     
     def getDistToStart(self):
@@ -167,20 +182,32 @@ class map_manager:
 
 if __name__=="__main__":
     filePath = "F:\\polyhack\\trafficmap\\aarhus\\osm.net.xml"
+    write_cost(filePath)
+    sys.exit(0)
     # test network reading function
     bus_depot_start_edge = '744377000#0'
     bus_depot_end_edge = '521059831#0'
     network = map_manager(filePath,bus_depot_start_edge,bus_depot_end_edge)
+    
     ids = network.getEdgeIDs()
     print('\nlength of ids size: {}'.format(len(ids)))
 
     nodeids = network.getNodeIDs()
     print('\nlength of nodes size: {}'.format(len(nodeids)))
 
-    shortest,cost = network.getShortestPaths(ids[0],ids[-1])
-    print('\nstart id to end id: \n {}'.format([e.getID() for e in shortest]))
-    print('\n with cost: {}'.format(cost))
-    print('\ndist to start: {}'.format(network.getDistToStart()))
+    currentEdgeMap={}
+    for i in len(network.edgeid_list):
+        for j in len(network.edgeid_list[i]):
+            if(network.edgeid_list[i][j] != ""):
+                currentEdgeMap[network.edgeid_list[i][j]]=1
+    
+    result = network.getWeighedShortestPaths(bus_depot_end_edge,8,currentEdgeMap)
+
+    print(result)
+    # shortest,cost = network.getShortestPaths(ids[0],ids[-1])
+    # print('\nstart id to end id: \n {}'.format([e.getID() for e in shortest]))
+    # print('\n with cost: {}'.format(cost))
+    # print('\ndist to start: {}'.format(network.getDistToStart()))
 
 
 
