@@ -62,7 +62,7 @@ def main():
     bus_depot_start_edge = '744377000#0'
     bus_depot_end_edge = '521059831#0'
 
-    network = map_manager(network_xml_file, bus_depot_start_edge, bus_depot_end_edge)
+    network = map_manager(network_xml_file)
     simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network, List_bus_person)
 
     simulation.run()

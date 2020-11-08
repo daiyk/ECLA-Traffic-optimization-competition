@@ -33,7 +33,7 @@ class map_manager:
     docstring
     """
 
-    def __init__(self, network_path, bus_start_edge_id, bus_stop_edge_id):
+    def __init__(self, network_path):
         if not os.path.exists(network_path):
             print("map_manager: provided 'network_path' is Invalid")
         self._net = sumolib.net.readNet(network_path)
