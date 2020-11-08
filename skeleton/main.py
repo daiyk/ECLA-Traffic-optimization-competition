@@ -18,7 +18,7 @@ else:
 import traci
 import traci.constants as tc
 from skeleton.simulation import Simulation
-
+from skeleton.map_manager import map_manager
 
 def main():
 
@@ -59,7 +59,8 @@ def main():
     bus_depot_start_edge = '744377000#0'
     bus_depot_end_edge = '521059831#0'
 
-    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge)
+    network = map_manager(network_xml_file, bus_depot_start_edge, bus_depot_end_edge)
+    simulation = Simulation(simulation_steps, sleep_time, pedestrians, bus_depot_start_edge, bus_depot_end_edge, network)
     simulation.run()
 
     ######################################################################
