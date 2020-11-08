@@ -1,3 +1,5 @@
+import math
+from collections import defaultdict
 from time import sleep
 import sys
 import traci
