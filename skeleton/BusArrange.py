@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from math import ceil, floor
 
-predict_window = 300  # this is the window to calculate the pedestrians
-suggest_interval = 150  # this is the interval between two suggestion about how many and where car to send
+predict_window = 4  # this is the window to calculate the pedestrians
+suggest_interval = 2  # this is the interval between two suggestion about how many and where car to send
 busL = 8
 busM = 4
 busS = 2

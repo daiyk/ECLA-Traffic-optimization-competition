@@ -81,6 +81,8 @@ class Simulation:
                 bus_id = bus['bus_id']
                 bus_type = bus['bus_type']
                 personCapacity = bus['capacity']
+
+
                 traci.vehicle.add(vehID=bus_id, typeID=bus_type, routeID="", depart=step+150, departPos=0,
                                   departSpeed=0, departLane=0, personCapacity=personCapacity)
                 traci.vehicle.subscribe(bus_id, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_POSITION, tc.VAR_NEXT_STOPS))
@@ -99,8 +101,6 @@ class Simulation:
                 #             self.network.getShortestPaths(edgeID_from, edgeID_to)
 
 
-
-
                 persons_to_travel = defaultdict()
                 for sp in shortestPath:
                     if currentEdgePerson.get(sp, None):
@@ -112,12 +112,13 @@ class Simulation:
                             personCapacity -= 1
 
                 if len(shortestPath) == 0:
-                    p = currentEdgePerson[person.edge_from].pop(0)
-                    traci.vehicle.setRoute(bus_id, [self.bus_depot_start_edge])
-                    traci.vehicle.changeTarget(bus_id, p.edge_from)
-                    traci.vehicle.setStop(vehID=bus_id, edgeID=p.edge_from, pos=p.position_from, laneIndex=0,
-                                          duration=10, flags=tc.STOP_DEFAULT)
-                    persons_to_travel[p.edge_from] = [p]
+                    if(len(currentEdgePerson[person.edge_from])!=0):
+                        p = currentEdgePerson[person.edge_from].pop(0)
+                        traci.vehicle.setRoute(bus_id, [self.bus_depot_start_edge])
+                        traci.vehicle.changeTarget(bus_id, p.edge_from)
+                        traci.vehicle.setStop(vehID=bus_id, edgeID=p.edge_from, pos=p.position_from, laneIndex=0,
+                                              duration=10, flags=tc.STOP_DEFAULT)
+                        persons_to_travel[p.edge_from] = [p]
 
                 for i in range(len(shortestPath)):
                     if persons_to_travel.get(shortestPath[i],None):
@@ -137,41 +138,41 @@ class Simulation:
                     list_pedestrians_onboard.append(persons_to_travel[sp])
 
                 # main runnig part
-                persons = list_pedestrians_onboard[-1]
-                last_person = persons[-1]
-                cost_des = self.find_cost_des(last_person, persons)
-
-                for i in range(0, len(persons)):
-                    person_des = self.send_passenger_leave(cost_des, persons, last_person, bus_id)
-                    last_person = person_des
-                    persons.remove(person_des)  # remove left passenger
+                if(len(list_pedestrians_onboard)!=0):
+                    persons = list_pedestrians_onboard[-1]
+                    last_person = persons[-1]
                     cost_des = self.find_cost_des(last_person, persons)
+
+                    for i in range(0, len(persons)):
+                        person_des = self.send_passenger_leave(cost_des, persons, last_person, bus_id)
+                        last_person = person_des
+                        persons.remove(person_des)  # remove left passenger
+                        cost_des = self.find_cost_des(last_person, persons)
 
 
         # todo: for each passengers in the bus, redirect the bus to send as many passangers as possible to the destinations
-        for b in self.bus:
-            if (traci.vehicle.getPersonNumber()==0):
-                traci.vehicle.setRoute(b, [self.bus_depot_end_edge])
-                traci.vehicle.setStop(vehID=b, edgeID=self.bus_depot_end_edge,
-                                      pos=self.network.getEdge(self.bus_depot_end_edge), laneIndex=0,
-                                      duration=50, flags=tc.STOP_DEFAULT)
-                continue
-            if traci.vehicle.getNextStops(b) is None and (traci.vehicle.isAtBusStop(b)):
-                personListIDs = traci.vehicle.getPersonIDList(b)
-                # TODO: map personListIDs to personList! ! !
-                personList = self.Get_Onboard_Person_list(b)
-                currentEdgeID = traci.vehicle.getRoadID(b)
-                costs = []
-                for per in personList:
-                    _, cost = self.network.getShortestPath(currentEdgeID, per.edge_to)
-                    costs.append(cost)
-                # sorted_person_index = sorted(range(len(costs)), key=lambda k: s[k])
-                next_dest_ind = costs.index(min(costs))
-                traci.vehicle.setRoute(b, [personList[next_dest_ind].edge_to])
-                traci.vehicle.setStop(vehID=b, edgeID=personList[next_dest_ind].edge_from,
-                                      pos=personList[next_dest_ind].position_from, laneIndex=0,
-                                      duration=50, flags=tc.STOP_DEFAULT)
-
+        buslist = traci.vehicle.getIDList()
+        for b in buslist:
+                if traci.vehicle.getPersonNumber(b)==0 and traci.vehicle.getNextStops(b) is None:
+                    traci.vehicle.setRoute(b, [self.bus_depot_end_edge])
+                    traci.vehicle.setStop(vehID=b, edgeID=self.bus_depot_end_edge,
+                                          pos=self.network.getEdge(self.bus_depot_end_edge).getFromNode().getCoord(), laneIndex=0,
+                                          duration=50, flags=tc.STOP_DEFAULT)
+                # if traci.vehicle.getNextStops(b) is None and (traci.vehicle.isAtBusStop(b)) and traci.vehicle.getPersonNumber(b)!=0:
+                #     personListIDs = traci.vehicle.getPersonIDList(b)
+                #     # TODO: map personListIDs to personList! ! !
+                #     personList = self.Get_Onboard_Person_list(b)
+                #     currentEdgeID = traci.vehicle.getRoadID(b)
+                #     costs = []
+                #     for per in personList:
+                #         _, cost = self.network.getShortestPath(currentEdgeID, per.edge_to)
+                #         costs.append(cost)
+                #     # sorted_person_index = sorted(range(len(costs)), key=lambda k: s[k])
+                #     next_dest_ind = costs.index(min(costs))
+                #     traci.vehicle.setRoute(b, [personList[next_dest_ind].edge_to])
+                #     traci.vehicle.setStop(vehID=b, edgeID=personList[next_dest_ind].edge_from,
+                #                           pos=personList[next_dest_ind].position_from, laneIndex=0,
+                #                           duration=50, flags=tc.STOP_DEFAULT)
 
 
     def find_cost_des(self, last_person, list_pedestrians_onboard):
