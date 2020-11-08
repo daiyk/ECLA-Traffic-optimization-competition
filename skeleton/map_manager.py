@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import collections
 
 #SUMO_HOME
 os.environ["SUMO_HOME"] = r"E:\sumo"
@@ -25,7 +26,6 @@ def calDistoThePoint(edges,x0,y0):
             dist.append(math.sqrt((x_e-x0)**2+(y_e-y0)**2))
         return dist
 
-
 class map_manager:
     """
     docstring
@@ -47,14 +47,14 @@ class map_manager:
 
         self._edgeDistToStart=None
         self._edgeDistToEnd = None
-        if (bus_start_edge_id in self._edgeIDs) and (bus_stop_edge_id in self._edgeIDs):
-            x_s1,y_s1 = self._net.getEdge(bus_start_edge_id).getFromNode().getCoord()
-            x_s2,y_s2 = self._net.getEdge(bus_start_edge_id).getToNode().getCoord()
-            self._edgeDistToStart = calDistoThePoint(edges,(x_s1+x_s2)/2.0,(y_s1+y_s2)/2.0)
+        # if (bus_start_edge_id in self._edgeIDs) and (bus_stop_edge_id in self._edgeIDs):
+        #     x_s1,y_s1 = self._net.getEdge(bus_start_edge_id).getFromNode().getCoord()
+        #     x_s2,y_s2 = self._net.getEdge(bus_start_edge_id).getToNode().getCoord()
+        #     self._edgeDistToStart = calDistoThePoint(edges,(x_s1+x_s2)/2.0,(y_s1+y_s2)/2.0)
 
-            x_e1,y_e1 = self._net.getEdge(bus_stop_edge_id).getFromNode().getCoord()
-            x_e2,y_e2 = self._net.getEdge(bus_stop_edge_id).getToNode().getCoord()
-            self._edgeDistToEnd = calDistoThePoint(edges,(x_e1+x_e2)/2.0,(y_e1+y_e2)/2.0)
+        #     x_e1,y_e1 = self._net.getEdge(bus_stop_edge_id).getFromNode().getCoord()
+        #     x_e2,y_e2 = self._net.getEdge(bus_stop_edge_id).getToNode().getCoord()
+        #     self._edgeDistToEnd = calDistoThePoint(edges,(x_e1+x_e2)/2.0,(y_e1+y_e2)/2.0)
 
         self._nodeDict = {}
         # mapping from nodeID to index
@@ -62,7 +62,7 @@ class map_manager:
             self._nodeDict[n.getID()]=idx
         
         # build inital adjacent list
-        self.edgeid_list=[[0 for x in range(self._numNodes)] for y in range(self._numNodes)]
+        self.edgeid_list=[["" for x in range(self._numNodes)] for y in range(self._numNodes)]
         self.adjacent_list=[[] for x in range(self._numNodes)]
         # init adjacent list, this should be adjusted according to the current traffic condition
         for e in edges:
@@ -70,6 +70,16 @@ class map_manager:
             self.edgeid_list[self._nodeDict[e.getFromNode().getID()]][self._nodeDict[e.getToNode().getID()]] = e.getID()
         # might need to store edge ids
 
+        # calculate the cost of all shortest paths
+        self.shortestPathCost_list=collections.defaultdict(dict)
+        for e1 in edges:
+            for e2 in edges:
+                if(e1.getID()==e2.getID()):
+                    continue
+                _,cost = self._net.getShortestPath(e1.getID(),e2.getID())
+                self.shortestPathCost_list[e1.getID()][e2.getID()]=cost
+
+    
     def getDistToStart(self):
         return self._edgeDistToStart
     
@@ -154,26 +164,6 @@ class map_manager:
             shortestPath.append(self.edgeid_list[pre_id[endID]][endID])
             endID = pre_id[endID]
         return shortestPath
-
-
-
-                
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
 
 if __name__=="__main__":
     filePath = "F:\\polyhack\\trafficmap\\aarhus\\osm.net.xml"
