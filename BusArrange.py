@@ -72,6 +72,11 @@ def Bus_Arrange(sum_list:list, time_scale:int, sorted_pedestrians:list):
 
     return List_bus_person
     
+def Fast(pedestrians:list, timespan:int):
+    sort_ped = Sort_Pedestrians(pedestrians)
+    sum_list = Calc_Pedestrian_List(sort_ped, timespan, predict_window, suggest_interval)
+    List_bus_person = Bus_Arrange(sum_list, timespan, sort_ped)
+    return List_bus_person
         
 
 
