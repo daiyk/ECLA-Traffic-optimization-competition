@@ -28,16 +28,28 @@ class Simulation:
             if List_bus_timestamp[0] > 0:
                 for  _ in range(int(List_bus_timestamp[0])):
                     dictionary_bus[step].append({'bus_id':f'bus_{self.bus_index}','bus_type':"BUS_L", 'capacity':8})
-                    index += 1
+                    self.bus_index += 1
             if List_bus_timestamp[1] > 0:
                 for  _ in range(int(List_bus_timestamp[1])):
                     dictionary_bus[step].append({'bus_id':f'bus_{self.bus_index}','bus_type':"BUS_M", 'capacity':4})
-                    index += 1
+                    self.bus_index += 1
             if List_bus_timestamp[1] > 0:
                 for  _ in range(int(List_bus_timestamp[2])):
                     dictionary_bus[step].append({'bus_id':f'bus_{self.bus_index}','bus_type':"BUS_S", 'capacity':2})
-                    index += 1
+                    self.bus_index += 1
         return dictionary_bus
+
+    # This needs to be checked
+    def Get_Onboard_Person_list(self,bus_id:str):
+        list_passengersID = traci.vehicle.getPersonIDList(bus_id)
+        list_pedestrians_onboard = []
+        for i in list_passengersID:
+            for pedestrian in self.pedestrians:
+                if i==pedestrian.id:
+                    list_pedestrians_onboard.append(pedestrian)
+                else:
+                    pass
+        return list_pedestrians_onboard
 
     def pick_up_persons(self, currentEdgePerson, step):
 
