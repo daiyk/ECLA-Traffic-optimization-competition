@@ -55,7 +55,21 @@ class map_manager:
             x_e1,y_e1 = self._net.getEdge(bus_stop_edge_id).getFromNode().getCoord()
             x_e2,y_e2 = self._net.getEdge(bus_stop_edge_id).getToNode().getCoord()
             self._edgeDistToEnd = calDistoThePoint(edges,(x_e1+x_e2)/2.0,(y_e1+y_e2)/2.0)
-    
+
+        self._nodeDict = {}
+        # mapping from nodeID to index
+        for idx,n in enumerate(nodes):
+            self._nodeDict[n.getID()]=idx
+        
+        # build inital adjacent list
+        self.edgeid_list=[[0 for x in range(self._numNodes)] for y in range(self._numNodes)]
+        self.adjacent_list=[[] for x in range(self._numNodes)]
+        # init adjacent list, this should be adjusted according to the current traffic condition
+        for e in edges:
+            self.adjacent_list[self._nodeDict[e.getFromNode().getID()]].append(self._nodeDict[e.getToNode().getID()])
+            self.edgeid_list[self._nodeDict[e.getFromNode().getID()]][self._nodeDict[e.getToNode().getID()]] = e.getID()
+        # might need to store edge ids
+
     def getDistToStart(self):
         return self._edgeDistToStart
     
@@ -97,7 +111,70 @@ class map_manager:
             return self._net.getShortestPath(self.getEdge(edgeID_from),self.getEdge(edgeID_to))
         else:
             return None,None
-    
+
+    # currentEdgePerson should be the dictionary with[edgeId, persons]
+    def getWeighedShortestPaths(self,edgeID_from,capacity,currentEdgePerson):
+        if (edgeID_from not in self._edgeIDs):
+            return None
+        cost = [-1,0]*len(self._numNodes)
+        start_id = self._nodeDict[self.getEdge(edgeID_from).getFromNode()]
+        cost[start_id][0] = 0
+
+        pre_id = [-1]*len(self._numNodes)
+        pre_id[start_id]=start_id
+
+        # stores in the queue
+        queue=[]
+        queue.append(start_id)
+        FindTarget = False
+        currentCap = 0
+        endID = -1
+        while not queue:
+            pop_id = queue.pop(0)
+            if currentCap == capacity:
+               break
+            for neighbor in self.adjacent_list[pop_id]:
+                if(cost[neighbor][0]==-1):
+                    queue.append(neighbor)
+                currentCost = cost[pop_id][0] + self.getEdge(self.edgeid_list[pop_id][neighbor]).getLength()
+                if(currentCost < cost[neighbor] or cost[neighbor]==-1):
+                    cost[neighbor][0] = currentCost
+                    pre_id[neighbor] = pop_id
+                    currentPersonNum = cost[pop_id][1]+currentEdgePerson[self.edgeid_list[pop_id][neighbor]]
+                    if(currentPersonNum >= capacity):
+                        endID = neighbor
+                        FindTarget=True
+                        break
+            if FindTarget:
+                break
+        if not FindTarget:
+            return []
+        shortestPath=[]
+        while pre_id[endID]!=endID:
+            shortestPath.append(self.edgeid_list[pre_id[endID]][endID])
+            endID = pre_id[endID]
+        return shortestPath
+
+
+
+                
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
 if __name__=="__main__":
     filePath = "F:\\polyhack\\trafficmap\\aarhus\\osm.net.xml"
     # test network reading function
